@@ -229,7 +229,14 @@ func (c *drawImageCommand) Exec(indexOffset int) error {
 	}
 
 	c.dst.image.SetAsDestination()
-	c.src.image.SetAsSource()
+	if c.src == nil {
+		/*if c.mode != graphics.CompositeModeClear {
+			panic("not reached")
+		}*/
+		driver().ResetSource()
+	} else {
+		c.src.image.SetAsSource()
+	}
 	if err := driver().Draw(c.nindices, indexOffset, c.mode, c.color, c.filter); err != nil {
 		return err
 	}

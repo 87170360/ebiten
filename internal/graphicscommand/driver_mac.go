@@ -12,18 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build darwin
-// +build !ios
-// +build !js
+// +build darwin,!ios
 
-package shareable
+package graphicscommand
 
-// On MacBook Pro 2013 (Late), there is a bug in texture rendering and
-// extending shareable textures sometimes fail (#593). This is due to
-// a bug in the grahics driver, and there is nothing we can do. Let's
-// not extend shareable textures in such environment.
-
-const (
-	initSize = 4096
-	maxSize  = 4096
+import (
+	"github.com/hajimehoshi/ebiten/internal/graphicsdriver"
+	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/metal"
 )
+
+func driver() graphicsdriver.GraphicsDriver {
+	return metal.Get()
+}

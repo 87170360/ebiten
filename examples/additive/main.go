@@ -61,6 +61,11 @@ func update(screen *ebiten.Image) error {
 	op.CompositeMode = ebiten.CompositeModeLighter
 	screen.DrawImage(ebitenImage, op)
 
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(ox+2*float64(w), oy)
+	op.CompositeMode = ebiten.CompositeModeCopy
+	screen.DrawImage(ebitenImage, op)
+
 	return nil
 }
 

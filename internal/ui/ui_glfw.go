@@ -82,9 +82,16 @@ func init() {
 	cacheMonitors()
 }
 
+func useGL() bool {
+	return runtime.GOOS != "darwin"
+}
+
 func initialize() error {
 	if err := glfw.Init(); err != nil {
 		return err
+	}
+	if !useGL() {
+		glfw.WindowHint(glfw.ClientAPI, glfw.NoAPI)
 	}
 	glfw.WindowHint(glfw.Visible, glfw.False)
 	glfw.WindowHint(glfw.Resizable, glfw.False)
@@ -105,7 +112,9 @@ func initialize() error {
 	hideConsoleWindowOnWindows()
 	currentUI.window = window
 
-	currentUI.window.MakeContextCurrent()
+	if useGL() {
+		currentUI.window.MakeContextCurrent()
+	}
 
 	mode := glfw.CursorNormal
 	if !currentUI.isInitCursorVisible() {
@@ -703,18 +712,7 @@ func (u *userInterface) loop(g GraphicsContext) error {
 				u.swapBuffers()
 				return nil
 			}
-
-			n1 := time.Now().UnixNano()
 			u.swapBuffers()
-			n2 := time.Now().UnixNano()
-			d := time.Duration(n2 - n1)
-
-			// On macOS Mojave, vsync might not work (#692).
-			// As a tempoarry fix, just wait for a while not to consume CPU too much.
-			const threshold = 4 * time.Millisecond // 250 [Hz]
-			if d < threshold {
-				time.Sleep(threshold - d)
-			}
 			return nil
 		})
 	}
@@ -722,7 +720,9 @@ func (u *userInterface) loop(g GraphicsContext) error {
 
 // swapBuffers must be called from the main thread.
 func (u *userInterface) swapBuffers() {
-	u.window.SwapBuffers()
+	if useGL() {
+		u.window.SwapBuffers()
+	}
 }
 
 // setScreenSize must be called from the main thread.
@@ -808,17 +808,19 @@ func (u *userInterface) forceSetScreenSize(width, height int, scale float64, ful
 		u.window.SetTitle(u.title)
 	}
 
-	// SwapInterval is affected by the current monitor of the window.
-	// This needs to be called at least after SetMonitor.
-	// Without SwapInterval after SetMonitor, vsynch doesn't work (#375).
-	//
-	// TODO: (#405) If triple buffering is needed, SwapInterval(0) should be called,
-	// but is this correct? If glfw.SwapInterval(0) and the driver doesn't support triple
-	// buffering, what will happen?
-	if u.vsync {
-		glfw.SwapInterval(1)
-	} else {
-		glfw.SwapInterval(0)
+	if useGL() {
+		// SwapInterval is affected by the current monitor of the window.
+		// This needs to be called at least after SetMonitor.
+		// Without SwapInterval after SetMonitor, vsynch doesn't work (#375).
+		//
+		// TODO: (#405) If triple buffering is needed, SwapInterval(0) should be called,
+		// but is this correct? If glfw.SwapInterval(0) and the driver doesn't support triple
+		// buffering, what will happen?
+		if u.vsync {
+			glfw.SwapInterval(1)
+		} else {
+			glfw.SwapInterval(0)
+		}
 	}
 
 	u.toChangeSize = true

@@ -12,15 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build !darwin ios
+// +build darwin
 
-package graphicscommand
+#include "ns.h"
+#import <Cocoa/Cocoa.h>
 
-import (
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver"
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/opengl"
-)
+void *Window_ContentView(void *window) {
+  return ((NSWindow *)window).contentView;
+}
 
-func driver() graphicsdriver.GraphicsDriver {
-	return opengl.Get()
+void View_SetLayer(void *view, void *layer) {
+  ((NSView *)view).layer = (CALayer *)layer;
+}
+
+void View_SetWantsLayer(void *view, BOOL wantsLayer) {
+  ((NSView *)view).wantsLayer = wantsLayer;
 }

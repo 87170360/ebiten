@@ -27,6 +27,7 @@ type GraphicsDriver interface {
 	NewScreenFramebufferImage(width, height int) (Image, error)
 	Reset() error
 	Draw(indexLen int, indexOffset int, mode graphics.CompositeMode, colorM *affine.ColorM, filter graphics.Filter) error
+	ResetSource()
 }
 
 type Image interface {

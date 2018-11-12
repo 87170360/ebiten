@@ -57,28 +57,19 @@ type Image struct {
 	h2 int
 }
 
-var dummyImage = newImageWithoutInit(16, 16, false)
-
-// newImageWithoutInit creates an image without initialization.
-//
-// Note that Dispose is not called automatically.
-func newImageWithoutInit(width, height int, volatile bool) *Image {
-	i := &Image{
-		image:    graphicscommand.NewImage(width, height),
-		volatile: volatile,
-	}
-	theImages.add(i)
-	return i
-}
-
 // NewImage creates an empty image with the given size.
 //
 // The returned image is cleared.
 //
 // Note that Dispose is not called automatically.
 func NewImage(width, height int, volatile bool) *Image {
-	i := newImageWithoutInit(width, height, volatile)
-	i.ReplacePixels(nil, 0, 0, width, height)
+	i := &Image{
+		image:    graphicscommand.NewImage(width, height),
+		volatile: volatile,
+	}
+	theImages.add(i)
+	// TODO: Now all new images should be cleard without replacing pixels :-)
+	//i.ReplacePixels(nil, 0, 0, width, height)
 	return i
 }
 
@@ -94,7 +85,6 @@ func NewScreenFramebufferImage(width, height int) *Image {
 		screen:   true,
 	}
 	theImages.add(i)
-	i.ReplacePixels(nil, 0, 0, width, height)
 	return i
 }
 
@@ -153,17 +143,13 @@ func (i *Image) ReplacePixels(pixels []byte, x, y, width, height int) {
 	if pixels != nil {
 		i.image.ReplacePixels(pixels, x, y, width, height)
 	} else {
-		// There are not 'drawImageHistoryItem's for this image and dummyImage.
-		// This means dummyImage might not be restored yet when this image is restored.
-		// However, that's ok since this image will be stale or have updated pixel data
-		// and this image can be restored without dummyImage.
-		w, h := dummyImage.Size()
+		const w, h = 16, 16
 		vs := graphics.QuadVertices(w, h, 0, 0, w, h,
 			float32(width)/float32(w), 0, 0, float32(height)/float32(h),
 			float32(x), float32(y),
-			0, 0, 0, 0)
+			1, 1, 1, 1)
 		is := graphics.QuadIndices()
-		i.image.DrawImage(dummyImage.image, vs, is, nil, graphics.CompositeModeCopy, graphics.FilterNearest)
+		i.image.DrawImage(nil, vs, is, nil, graphics.CompositeModeClear, graphics.FilterNearest)
 	}
 
 	if x == 0 && y == 0 && width == w && height == h {

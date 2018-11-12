@@ -16,6 +16,7 @@ package ebiten
 
 import (
 	"math"
+	"runtime"
 
 	"github.com/hajimehoshi/ebiten/internal/clock"
 	"github.com/hajimehoshi/ebiten/internal/hooks"
@@ -86,6 +87,11 @@ func (c *graphicsContext) initializeIfNeeded() error {
 	return nil
 }
 
+// TODO: Merge this and ui.useGL
+func useGL() bool {
+	return runtime.GOOS != "darwin"
+}
+
 func (c *graphicsContext) Update(afterFrameUpdate func()) error {
 	tps := int(MaxTPS())
 	updateCount := clock.Update(tps)
@@ -122,14 +128,21 @@ func (c *graphicsContext) Update(afterFrameUpdate func()) error {
 	}
 
 	op := &DrawImageOptions{}
-	// c.screen is special: its Y axis is down to up,
-	// and the origin point is lower left.
-	op.GeoM.Scale(c.screenScale, -c.screenScale)
-	// Make the screen height an even number to fit the upper side of the screen (#662).
-	op.GeoM.Translate(0, float64((c.screenHeight+1)/2*2))
+
+	// Texel (uv) directions are different among GL or others.
+	if useGL() {
+		// c.screen is special: its Y axis is down to up,
+		// and the origin point is lower left.
+		op.GeoM.Scale(c.screenScale, -c.screenScale)
+		// Make the screen height an even number to fit the upper side of the screen (#662).
+		op.GeoM.Translate(0, float64((c.screenHeight+1)/2*2))
+	} else {
+		op.GeoM.Scale(c.screenScale, c.screenScale)
+	}
+
 	op.GeoM.Translate(c.offsetX, c.offsetY)
 
-	op.CompositeMode = CompositeModeCopy
+	//op.CompositeMode = CompositeModeCopy
 
 	// filterScreen works with >=1 scale, but does not well with <1 scale.
 	// Use regular FilterLinear instead so far (#669).
