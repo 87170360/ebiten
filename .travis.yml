@@ -3,6 +3,14 @@ language: go
 go:
   - "1.11"
 
+os:
+  - linux
+  - osx
+
+compiler:
+  - gcc
+  - clang
+
 addons:
   apt:
     sources:
@@ -37,9 +45,9 @@ install:
   - export PATH=/tmp/chromedriver_linux64:$PATH
 
 before_script:
-  - export DISPLAY=:99.0
-  - sh -e /etc/init.d/xvfb start
-  - sleep 3
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export DISPLAY=:99.0;         fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -e /etc/init.d/xvfb start; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sleep 3;                      fi
 
 script:
   - cd /tmp/work
